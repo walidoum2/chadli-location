@@ -1,0 +1,89 @@
+// Chadli Location — Prisma schema
+// SQLite for local dev. To deploy (Vercel + Supabase/Neon):
+//   1. change provider below to "postgresql"
+//   2. set DATABASE_URL to the Postgres connection string (with ?pgbouncer=true
+//      and ?sslmode=require as your host recommends)
+//   3. run: npx prisma migrate deploy
+// No other code change is needed — the schema is portable.
+// NOTE: SQLite has no native enums — status fields are documented Strings.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Car {
+  id           String        @id @default(cuid())
+  nameFr       String
+  nameAr       String?
+  nameEn       String?
+  descFr       String?
+  descAr       String?
+  descEn       String?
+  category     String // Citadine | Berline | SUV | Luxe
+  transmission String // Manuelle | Automatique
+  seats        Int           @default(5)
+  fuel         String // Diesel | Essence | Hybride | Electrique
+  pricePerDay  Int
+  currency     String        @default("DA")
+  status       String        @default("available") // available | unavailable
+  images       String        @default("[]") // JSON array of image URLs/paths
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+
+  @@index([status, category])
+}
+
+model Reservation {
+  id             String   @id @default(cuid())
+  carId          String
+  car            Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  customerName   String
+  phone          String
+  email          String?
+  pickupAt       DateTime
+  returnAt       DateTime
+  pickupLocation String
+  // pending | confirmed | completed | cancelled
+  // Only "pending" and "confirmed" block availability for a car.
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([carId, pickupAt, returnAt])
+  @@index([status])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read, createdAt])
+}
+
+// Key-value store for all admin-editable site text.
+// Each key holds a translation per language; public site falls back to French.
+model SiteContent {
+  key       String   @id
+  valueFr   String
+  valueAr   String?
+  valueEn   String?
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
