@@ -1,3 +1,4 @@
+import "server-only";
 import { mkdir, writeFile } from "fs/promises";
 import { randomBytes } from "crypto";
 import path from "path";
