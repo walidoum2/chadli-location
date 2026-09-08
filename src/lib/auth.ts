@@ -1,4 +1,3 @@
-import "server-only";
 import { createHash, createHmac, timingSafeEqual, randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { prisma } from "./db";
